@@ -1,0 +1,1 @@
+e:\nc\nasm\nasm -o wynik.com -f bin 5a.asm
