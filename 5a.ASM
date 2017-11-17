@@ -7,7 +7,7 @@ org 100h
 
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
-
+	input:
 		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej podaj
 		INT 21H		;Przerwanie DOS
 		
@@ -60,12 +60,32 @@ org 100h
 
 		MOV DX, wrong	;Wrzuc do DX informacj© o bˆ©dnym parametrze
 		INT 21H		;Przewanie DOS
-
-		JMP ending	;Bezwarunkowo przejdz do etykiety koäcz¥cej program
-
 		
+		MOV DX, ent	;Enter
+		INT 21H		;Przerwanie DOS
+		
+		MOV DX, ask	;Do DX ˆadujemy informacj© czy chce powtorzyc wpisywanie liczb
+		INT 21H
+		
+		MOV AH, 1	;Funkcja pobierajaca znak z wejscia 
+				;Jesli bedzie to y to wracamy do poczatku jesli n to konczymy program
+		INT 21H		;Przerwanie DOS
+		
+		CMP AL, 121	;121 odpowiada y
+		JE  input	;Przejdz do wpisywania
+		CMP AL, 89	;89  odpowiada Y
+		JE  input	;Przejdz do wpisywania
+		CMP AL, 110	;110 odpowiada n
+		JE  ending	;Przejdz do zakonczenia
+		CMP AL, 78	;78  odpowiada N
+		JE ending	;Przejdz do zakonczenia
+
+		JMP ending	;Jesli uzytkownik poda inny symbol to przejdz do
+				;etykiety zakonczenia programu
+
 wrong    db  "Podales niepoprawny argument.$"
 hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
 getnumb  db  "Podaj liczb©: $"
 ent    	 db  10,13,36 
 stopinfo db  "Wcisnij enter aby zakonczyc wpisywanie liczby.$"
+ask	 db  "Czy chcesz powt¢rzy† wpisywanie liczby? y - tak, n - nie.$"
