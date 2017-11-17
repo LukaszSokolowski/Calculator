@@ -19,8 +19,10 @@ org 100h
 		
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
+		
+		MOV CX, 0	;Warto˜† 0 do rejestru CX, b©dzie on wskazywaˆ na ilosc pobranych cyfr przez program
 
-	loop:	
+      pushloop:			;W petli pobieramy znaki i wrzucamy na stos
 		MOV AH, 1	;Funkcja oczekj¥ca na znak ze standardowego wejscia
 		INT 21H		;Przerwanie DOS
 		
@@ -31,7 +33,8 @@ org 100h
 		CMP AL, 57	;Porownaj czy wprowadzony znak jest wartoscia odpowiadajaca liczbie
 		JG  error	;Jesli wiekszy to wprowadzony znak nie jest liczb¥ i przejdz do etykiety blad
 		
-		SUB AL, 48	;Uzyskujem cyfr© ze znaku ASCII
+		INC CX		;Poprawnie pobralismy cyfre wiec zwiekszam licznik cyfr
+		SUB AL, 48	;Uzyskujemy cyfr© ze znaku ASCII
 
 		XOR AH, AH	;Zerujemy g¢rn¥ cz©˜† rejestru AX czyli AH po to aby uzyska†
 				;w calym rejestrze wartosc naszej cyfry bo obecnie w AH mamy
@@ -39,9 +42,11 @@ org 100h
 				;ale uzywajac XOR mamy same zera w AH oraz 00000001 w AL
 
 		PUSH AX		;Wrzucamy na stos rejestr AX
-		JMP  loop	;Kolejny krok petli 
+		JMP  pushloop	;Kolejny krok petli 
 		
-	stackpop:
+       poploop:		        ;Zdejmujemy ze stosu
+		
+		
 
 		
 	ending:
