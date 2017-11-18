@@ -94,7 +94,12 @@ org 100h
 				;Jesli uzytkownik chce dalej wprowadzac cyfry to
 				;musimy zadbac o stos na ktorym ciagle beda wrzucone wczesniej cyfry
     clrstack:	
-		
+		POP BX
+		XOR BX,BX
+		CMP CX,0
+		DEC CX
+		JE  pushloop
+		JMP clrstack
 
 wrong    db  "Podales niepoprawny argument.$"
 hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
