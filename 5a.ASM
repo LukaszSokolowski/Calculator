@@ -30,7 +30,8 @@ org 100h
 		
 		MOV CX, 0	;Warto˜† 0 do rejestru CX, b©dzie on wskazywaˆ na ilosc pobranych cyfr przez program
 
-      pushloop:			;W petli pobieramy znaki i wrzucamy na stos
+
+      pushloop:	 		;W petli pobieramy znaki i wrzucamy na stos
 		MOV AH, 1	;Funkcja oczekj¥ca na znak ze standardowego wejscia
 		INT 21H		;Przerwanie DOS
 		
@@ -51,10 +52,6 @@ org 100h
 
 		PUSH AX		;Wrzucamy na stos rejestr AX
 		JMP  pushloop	;Kolejny krok petli 
-		
-		
-		
-
 		
 	ending:
 		MOV AX, 4C00H   ;Zwracamy kontrol© do DOS (stop program)
@@ -84,22 +81,24 @@ org 100h
 		INT 21H		;Przerwanie DOS
 		
 		CMP AL, 116	;116 odpowiada t
-		JE  input	;Przejdz do wpisywania
+		JE  clrstack	;Przejdz do wyczysczenia stosu
 		CMP AL, 84	;84  odpowiada T
-		JE  input	;Przejdz do wpisywania
+		JE  clrstack	;Przejdz do wyczyszczenia stosu
 
 		JMP ending	;Jesli uzytkownik poda n lub inny symbol to przejdz do
 				;etykiety zakonczenia programu
 
-				;Jesli uzytkownik chce dalej wprowadzac cyfry to
-				;musimy zadbac o stos na ktorym ciagle beda wrzucone wczesniej cyfry
-    clrstack:	
-		POP BX
-		XOR BX,BX
-		CMP CX,0
-		DEC CX
-		JE  pushloop
-		JMP clrstack
+    clrstack:			;Jesli uzytkownik chce jeszcze raz wprowadzac iczby 
+				;warto (???) wyczyscic stos ze wczesniej wprowadzonych wartosci
+
+		POP BX		;Zdejmij ze stosu do BX
+		XOR BX,BX	;Zeruj BX
+
+		CMP CX,0	;Porownaj czy juz koniec
+		JE  input	;Jesli tak to przejdz do ponownego wprowadzania
+		DEC CX		;Zmniejsz o 1 rejestr CX
+
+		JMP clrstack	;Przejdz do kolejnego kroku
 
 wrong    db  "Podales niepoprawny argument.$"
 hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
