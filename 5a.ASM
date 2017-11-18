@@ -7,14 +7,22 @@ org 100h
 
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
-	input:
-		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej podaj
+
+		MOV DX, stopinfo;Przenies do DX wartosc zmiennej informujacej o sposobie zakonczenia wprowadzania
 		INT 21H		;Przerwanie DOS
+	
 		
+	input:
+		XOR AL, AL	;Wyczysc rejestr AL poniewaz prowadzi tu rowniez instrukcja
+				;obslugujaca wyjatek wprowadzenia blednej liczby
+		MOV AH, 9	;Funkcja DOSowa wypisuj¥ca z DX ˆaäcuch znak¢w
+				;musimy powtorzyc deklaracje ah=9 poniewaz mozemy tu skoczyc
+				;z etykiety error gdzie w AH jest 1
+
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
-		
-		MOV DX, stopinfo;Informacja o sposobie zakonczenia wprowadzania cyfr
+
+		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej podaj
 		INT 21H		;Przerwanie DOS
 		
 		MOV DX, ent	;Enter
@@ -44,7 +52,6 @@ org 100h
 		PUSH AX		;Wrzucamy na stos rejestr AX
 		JMP  pushloop	;Kolejny krok petli 
 		
-       poploop:		        ;Zdejmujemy ze stosu
 		
 		
 
@@ -64,28 +71,34 @@ org 100h
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
 		
-		MOV DX, ask	;Do DX ˆadujemy informacj© czy chce powtorzyc wpisywanie liczb
+		MOV DX, askuser	;Do DX ˆadujemy informacj© czy chce powtorzyc wpisywanie liczb
 		INT 21H
 		
+		MOV DX, ent	;Enter
+		INT 21H		;Przewanie DOS
+
+		XOR AL,AL	;Wyczysc AL
+
 		MOV AH, 1	;Funkcja pobierajaca znak z wejscia 
 				;Jesli bedzie to y to wracamy do poczatku jesli n to konczymy program
 		INT 21H		;Przerwanie DOS
 		
-		CMP AL, 121	;121 odpowiada y
+		CMP AL, 116	;116 odpowiada t
 		JE  input	;Przejdz do wpisywania
-		CMP AL, 89	;89  odpowiada Y
+		CMP AL, 84	;84  odpowiada T
 		JE  input	;Przejdz do wpisywania
-		CMP AL, 110	;110 odpowiada n
-		JE  ending	;Przejdz do zakonczenia
-		CMP AL, 78	;78  odpowiada N
-		JE ending	;Przejdz do zakonczenia
 
-		JMP ending	;Jesli uzytkownik poda inny symbol to przejdz do
+		JMP ending	;Jesli uzytkownik poda n lub inny symbol to przejdz do
 				;etykiety zakonczenia programu
+
+				;Jesli uzytkownik chce dalej wprowadzac cyfry to
+				;musimy zadbac o stos na ktorym ciagle beda wrzucone wczesniej cyfry
+    clrstack:	
+		
 
 wrong    db  "Podales niepoprawny argument.$"
 hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
 getnumb  db  "Podaj liczb©: $"
 ent    	 db  10,13,36 
-stopinfo db  "Wcisnij enter aby zakonczyc wpisywanie liczby.$"
-ask	 db  "Czy chcesz powt¢rzy† wpisywanie liczby? y - tak, n - nie.$"
+stopinfo db  "Wcisnij ENTER, aby zakonczyc wpisywanie liczby.$"
+askuser	 db  "Czy chcesz powt¢rzy† wpisywanie liczby? t - tak, n - nie.$"
