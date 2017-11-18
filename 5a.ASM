@@ -1,11 +1,11 @@
 org 100h
 
 	start:		
-		MOV AH, 9	;Funkcja wypisujaca lancuch znak¢w do momentu napotkania $
-		MOV DX, hello	;Wrzuc do rejestru DX wartosc zmiennej hello
+		MOV AH, 9	;Funkcja dosowa wypisujaca lancuch znak¢w do momentu napotkania znkau $
+		MOV DX, hello	;Wrzuc do rejestru DX wartosc zmiennej z komunikatem powitalnym
 		INT 21H		;Przerwanie DOS
 
-		MOV DX, ent	;Enter
+		MOV DX, ent	;Zmienna ent to kombinacja powrotu kursora oraz przejscia do nowej lini (enter)
 		INT 21H		;Przerwanie DOS
 
 		MOV DX, stopinfo;Przenies do DX wartosc zmiennej informujacej o sposobie zakonczenia wprowadzania
@@ -14,15 +14,16 @@ org 100h
 		
 	input:
 		XOR AL, AL	;Wyczysc rejestr AL poniewaz prowadzi tu rowniez instrukcja
-				;obslugujaca wyjatek wprowadzenia blednej liczby
+				;obslugujaca wyjatek wprowadzenia blednej liczby (error->clrstack)
+				;ktora zawiera warosci w AL
 		MOV AH, 9	;Funkcja DOSowa wypisujaca z DX lancuch znak¢w
-				;musimy powtorzyc deklaracje ah=9 poniewaz mozemy tu skoczyc
+				;musimy powtorzyc dekla	racje AH=9 poniewaz mozemy tu skoczyc
 				;z etykiety error gdzie w AH jest 1
 
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
 
-		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej podaj
+		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej getnumb
 		INT 21H		;Przerwanie DOS
 		
 		MOV DX, ent	;Enter
@@ -37,8 +38,8 @@ org 100h
 		
 		CMP AL, 13	;Jesli jest to enter konczymy wpisywanie znakow
 		JE  poploop	;Przeskocz do etykiety zrzucania cyfr ze stosu
-		CMP AL, 48	;Sprawdzamy czy wprowadzony znak jest liczba badajac
-		JL  error	;przedzial wartosci dla liczb w tablicy ASCII	
+		CMP AL, 48	;Sprawdzamy czy wprowadzony znak jest cyfra badajac
+		JL  error	;przedzial wartosci dla liczb w tablicy ASCII jesli jest mniejszy to nie jest cyfra	
 		CMP AL, 57	;Porownaj czy wprowadzony znak jest wartoscia odpowiadajaca liczbie
 		JG  error	;Jesli wiekszy to wprowadzony znak nie jest liczb¥ i przejdz do etykiety blad
 		
@@ -59,12 +60,12 @@ org 100h
 				
 
        				;Aby stworzyc liczbe z cyfr przechowywanych na stosie musimy
-				;kolejno przy zdejmowaniu ze stosu mnozyc dana liczbe przez 
-				;ilosc aktualnych liczb na stosie oraz dodawac w petli ten wynik do
-				;zmiennej ktora po ostatnim zdjeciu ze stosu bedzie juz liczba ulozona
+				;kolejno przy zdejmowaniu ze stosu mnozyc dana cyfre razy 10 do potegi 
+				;ilosci aktualnych liczb na stosie oraz dodawac w petli ten wynik do
+				;zmiennej ktora po ostatnim zdjeciu ze stosu i dodaniu bedzie juz liczba ulozona
        poploop:			;z kolejno wprowadzonych cyfr
 
-		POP BX		;Zrzuc wartosc ze stosu
+		POP BX		;Zrzuc wartosc ze stosu do rejestru BX
 		DEC CX		;Zmniejsz CX czyli falge ilosci cyfr na stosie
 		CMP CX,0	;Jesli jest rowne zero to zrzucone jest wszystko
 		JE  endprogr	;!Przejdz do zakonczenia programu
@@ -80,7 +81,7 @@ org 100h
 
 	 error:
 		MOV AH, 9	;Funkcja wywolujaca lancuch znak¢w
-		MOV DX, ent	;Kombinacja znaku powrotu kursora oraz przejscia do kolejnej lini
+		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
 
 		MOV DX, wrong	;Wrzuc do DX informacje o blednym parametrze
@@ -89,8 +90,8 @@ org 100h
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
 		
-		MOV DX, askuser	;Do DX ladujemy informacje czy chce powtorzyc wpisywanie liczb
-		INT 21H
+		MOV DX, askuser	;Do DX kopiuj lancuch z pytaniem czy uzytkownik chce powtorzyc wpisywanie liczb
+		INT 21H		;Przerwanie DOS
 		
 		MOV DX, ent	;Enter
 		INT 21H		;Przewanie DOS
@@ -98,13 +99,13 @@ org 100h
 		XOR AL,AL	;Wyczysc AL
 
 		MOV AH, 1	;Funkcja pobierajaca znak z wejscia 
-				;Jesli bedzie to y to wracamy do poczatku jesli n to konczymy program
+				;Jesli bedzie to y to wracamy do poczatku wprowadzania danej liczby jesli n to konczymy program
 		INT 21H		;Przerwanie DOS
 		
 		CMP AL, 116	;116 odpowiada w ascii literze t
-		JE  clrstack	;Przejdz do wyczyszczenia stosu -> pobieraj wszystkie liczby jeszcze raz
+		JE  clrstack	;Przejdz do wyczyszczenia stosu -> pobieraj cyfry jeszcze raz na "czysty" stos
 		CMP AL, 84	;84  odpowiada w ascii literze T
-		JE  clrstack	;Przejdz do wyczyszczenia stosu -> pobieraj wszystkie liczby
+		JE  clrstack	;Przejdz do wyczyszczenia stosu -> pobieraj cyfry na "czysty" stos
 
 		JMP endprogr	;Jesli uzytkownik poda n lub inny symbol to przejdz do
 				;etykiety zakonczenia programu
@@ -117,8 +118,8 @@ org 100h
 		POP BX		;Zdejmij ze stosu do BX
 		XOR BX,BX	;Zeruj BX
 
-		CMP CX,0	;Porownaj czy juz zmalalo do zera
-		JE  input	;Jesli tak to przejdz do ponownego wprowadzania
+		CMP CX,0	;Porownaj czy wartosc rejestru CX wynosi 0
+		JE  input	;Jesli tak to przejdz do ponownego wprowadzania	cyfr
 		DEC CX		;Zmniejsz o 1 rejestr CX
 
 		JMP clrstack	;Przejdz do kolejnego kroku (tylko gdy JE input nie jest spelnione)
@@ -130,5 +131,5 @@ ent    	 db  10,13,36
 stopinfo db  "Wcisnij ENTER, aby zakonczyc wpisywanie liczby.$"
 askuser	 db  "Czy chcesz powt¢rzyc wpisywanie liczby? t - tak, n - nie.$"
 num1     db  0,36    ;W tej zmiennej przechowujemy pierwsza wprowadzona liczbe
-num2     db  0,36	  ;W tej zmiennej przechowujemy druga wprowadzona liczbe
+num2     db  0,36    ;W tej zmiennej przechowujemy druga wprowadzona liczbe
 count    db  0,36    ;Przechowywac bedzie ilosc cyfr na stosie
