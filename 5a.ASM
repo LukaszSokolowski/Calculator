@@ -17,8 +17,7 @@ org 100h
 				;obslugujaca wyjatek wprowadzenia blednej liczby (error->clrstack)
 				;ktora zawiera warosci w AL
 		MOV AH, 9	;Funkcja DOSowa wypisujaca z DX lancuch znak¢w
-				;musimy powtorzyc dekla	racje AH=9 poniewaz mozemy tu skoczyc
-				;z etykiety error gdzie w AH jest 1
+				;musimy powtorzyc dekla	racje AH=9 poniewaz mozemy tu skoczyc				;z etykiety error gdzie w AH jest 1
 
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
@@ -28,7 +27,7 @@ org 100h
 		
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
-		
+
 		MOV CX, 0	;Wartosc 0 do rejestru CX, bedzie on wskazywac na ilosc pobranych cyfr przez program
 
 
@@ -39,13 +38,12 @@ org 100h
 		CMP AL, 13	;Jesli jest to enter konczymy wpisywanie znakow
 		JE  poploop	;Przeskocz do etykiety zrzucania cyfr ze stosu
 		CMP AL, 48	;Sprawdzamy czy wprowadzony znak jest cyfra badajac
-		JL  error	;przedzial wartosci dla liczb w tablicy ASCII jesli jest mniejszy to nie jest cyfra	
-		CMP AL, 57	;Porownaj czy wprowadzony znak jest wartoscia odpowiadajaca liczbie
-		JG  error	;Jesli wiekszy to wprowadzony znak nie jest liczb¥ i przejdz do etykiety blad
+		JL  error	;przedzial wartosci dla cyfr w tablicy ASCII jesli jest mniejszy to nie jest cyfra	
+		CMP AL, 57	;Porownaj czy wprowadzony znak jest wartoscia odpowiadajaca cyfrze
+		JG  error	;Jesli wiekszy to wprowadzony znak nie jest cyfra i przejdz do etykiety error
 		
 		INC CX		;Poprawnie pobralismy cyfre wiec zwiekszam licznik cyfr
-		MOV [count], CX ;Skopiuj do zmiennej wartosc rejestru CX (ilosc liczb na stosie)
-
+				;MOV [count], CX ;???? Skopiuj do zmiennej wartosc rejestru CX (ilosc liczb na stosie)
 		SUB AL, 48	;Uzyskujemy cyfre ze znaku ASCII
 
 		XOR AH, AH	;Zerujemy g¢rna czesc rejestru AX czyli AH po to aby uzyskac
@@ -55,10 +53,9 @@ org 100h
 				;ale uzywajac XOR mamy same zera w AH oraz 00000002 w AL
 
 		PUSH AX		;Wrzucamy na stos rejestr AX
-		JMP  pushloop	;Kolejny krok petli 
-		
-				
 
+ 	        JMP pushloop	;Kolejny krok petli 
+			
        				;Aby stworzyc liczbe z cyfr przechowywanych na stosie musimy
 				;kolejno przy zdejmowaniu ze stosu mnozyc dana cyfre razy 10 do potegi 
 				;ilosci aktualnych liczb na stosie oraz dodawac w petli ten wynik do
@@ -66,16 +63,37 @@ org 100h
        poploop:			;z kolejno wprowadzonych cyfr
 
 		POP BX		;Zrzuc wartosc ze stosu do rejestru BX
+		MOV [count], CX ;Przenies wartosc o ilosci liczb na stosie do zmiennej count
+		JMP create	;Przejdz do tworzenia liczby
+	ready:
+		ADD [num1], BX	;Dodaj kolejne czesci policzonej liczby
+		XOR BX, BX
 		DEC CX		;Zmniejsz CX czyli falge ilosci cyfr na stosie
-		CMP CX,0	;Jesli jest rowne zero to zrzucone jest wszystko
+		CMP CX, 0	;Jesli jest rowne zero to zrzucone jest wszystko
 		JE  endprogr	;!Przejdz do zakonczenia programu
 
-		JMP poploop	;Jesli CX!=0 to przejdz do kolejnego kroku petli
-		;TO DO
-		;MNOZENIE LICZB ZDJECTYCH DO STOSU x10^cx I OBLICZANIE CALOSCIOWEJ LICZBY
-		;POPRZES SUME POMNOZONYCH CZESCI 
+    		JMP poploop	;Jesli CX!=0 to przejdz do kolejnego kroku petli
+
+	create:			;Tworzymy liczbe poprzez mnozenie przyklad dla 7 
+		MOV AL, 10	;Do AL wartosc 10
+		MUL BX		;Pomnoz rejestr BX przez wartosc rejestru AL i zapisz w AX 7*10=70
+		MOV BX, AX	;BX = 70 
+		MOV DX, [count]	;Do DX wrzuc ilosc pomnozen 
+		DEC DX		;Zmniejsz DX o 1
+		MOV [count],DX  ;Wpisz wartosc rejestru DX do zmiennej count
+		CMP DX, 0	;Porownaj czy jest rowny 0
+		JE ready	;Jesli tak to obliczenie tej czesci liczby gotowe i przejdz do etykiety ready
+
+     		JMP create	;Jesli nie to przejdz do kolejnego kroku i mnoz dalej
 		
-      endprogr:
+	 echo:
+		
+
+      endprogr: 
+		MOV AH, 9
+		MOV DX, koniec
+		INT 21H
+
 		MOV AX, 4C00H   ;Zwracamy kontrole do DOS (stop program)
 		INT 21H		;Przerwanie DOS
 
@@ -133,3 +151,5 @@ askuser	 db  "Czy chcesz powt¢rzyc wpisywanie liczby? t - tak, n - nie.$"
 num1     db  0,36    ;W tej zmiennej przechowujemy pierwsza wprowadzona liczbe
 num2     db  0,36    ;W tej zmiennej przechowujemy druga wprowadzona liczbe
 count    db  0,36    ;Przechowywac bedzie ilosc cyfr na stosie
+numbers	 db  2,36    ;Ilosc liczb do dzialan arytmetycznych
+koniec   db  "Koniec.$"
