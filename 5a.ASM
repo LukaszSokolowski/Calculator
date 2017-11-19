@@ -22,7 +22,7 @@ org 100h
 		MOV DX, ent	;Enter
 		INT 21H		;Przerwanie DOS
 
-		MOV DX, getnumb	;Do rejestru DX kopiuj wartosc zmiennej getnumb
+		MOV DX, getnumb	;Do rejestru DX kopiuj lancuch getnumb
 		INT 21H		;Przerwanie DOS
 		
 		MOV DX, ent	;Enter
@@ -43,7 +43,7 @@ org 100h
 		JG  error	;Jesli wiekszy to wprowadzony znak nie jest cyfra i przejdz do etykiety error
 		
 		INC CX		;Poprawnie pobralismy cyfre wiec zwiekszam licznik cyfr
-				;MOV [count], CX ;???? Skopiuj do zmiennej wartosc rejestru CX (ilosc liczb na stosie)
+				;MOV [miennej wartosc rejestru CX (ilosc liczb na stosie)
 		SUB AL, 48	;Uzyskujemy cyfre ze znaku ASCII
 
 		XOR AH, AH	;Zerujemy g¢rna czesc rejestru AX czyli AH po to aby uzyskac
@@ -51,26 +51,24 @@ org 100h
 				;wartosc funkcji wywolujacej pobranie znaku tak wiec 
 				;dla pobranej 2 mielibysmy np 100000002 w AX
 				;ale uzywajac XOR mamy same zera w AH oraz 00000002 w AL
-
 		PUSH AX		;Wrzucamy na stos rejestr AX
-
  	        JMP pushloop	;Kolejny krok petli 
 			
-       				;Aby stworzyc liczbe z cyfr przechowywanych na stosie musimy
-				;kolejno przy zdejmowaniu ze stosu mnozyc dana cyfre razy 10 do potegi 
-				;ilosci aktualnych liczb na stosie oraz dodawac w petli ten wynik do
-				;zmiennej ktora po ostatnim zdjeciu ze stosu i dodaniu bedzie juz liczba ulozona
-       poploop:			;z kolejno wprowadzonych cyfr
+       				;*Aby stworzyc liczbe z cyfr przechowywanych na stosie musimy
+				;*kolejno przy zdejmowaniu ze stosu mnozyc dana cyfre razy 10 do potegi 
+				;*ilosci aktualnych liczb na stosie oraz dodawac w petli ten wynik do
+				;*zmiennej ktora po ostatnim zdjeciu ze stosu i dodaniu bedzie juz liczba ulozona
+       poploop:			;*z kolejno wprowadzonych cyfr
 
 		POP BX		;Zrzuc wartosc ze stosu do rejestru BX
 		MOV [count], CX ;Przenies wartosc o ilosci liczb na stosie do zmiennej count
 		JMP create	;Przejdz do tworzenia liczby
 	ready:
-		ADD [num1], BX	;Dodaj kolejne czesci policzonej liczby
+		ADD [temp], BX	;Dodaj kolejne czesci policzonej liczby
 		XOR BX, BX
 		DEC CX		;Zmniejsz CX czyli falge ilosci cyfr na stosie
 		CMP CX, 0	;Jesli jest rowne zero to zrzucone jest wszystko
-		JE  endprogr	;!Przejdz do zakonczenia programu
+		JE  choose	;!Przejdz do etykiety sterujacej wprowadzaniem
 
     		JMP poploop	;Jesli CX!=0 to przejdz do kolejnego kroku petli
 
@@ -79,18 +77,49 @@ org 100h
 		MUL BX		;Pomnoz rejestr BX przez wartosc rejestru AL i zapisz w AX 7*10=70
 		MOV BX, AX	;BX = 70 
 		MOV DX, [count]	;Do DX wrzuc ilosc pomnozen 
-		DEC DX		;Zmniejsz DX o 1
+		DEC DX		;Zmniejsz rejestr DX o 1
 		MOV [count],DX  ;Wpisz wartosc rejestru DX do zmiennej count
 		CMP DX, 0	;Porownaj czy jest rowny 0
 		JE ready	;Jesli tak to obliczenie tej czesci liczby gotowe i przejdz do etykiety ready
 
      		JMP create	;Jesli nie to przejdz do kolejnego kroku i mnoz dalej
 		
-	 echo:
-		
+	choose:
+		XOR DX, DX
+		MOV DL, [numbers]
+		INC DL
+		MOV [numbers], DL
+		CMP DL, 1
 
+		JE  first
+
+	 second:
+		MOV AX, [temp] 
+		MOV BX, num2
+		MOV BX, [temp]
+				;przeskocz do wyboru operacji
+		JMP endprogr 
+
+	 first:	
+		MOV AX, [temp]
+		MOV BX, num1
+		MOV BX, [temp]
+		
+		XOR AX, AX		;zeruj wartosc zmiennej temp przed jej ponownym uzyciem
+
+		MOV AH, 9 
+		MOV DX, nextnum
+		INT 21H
+
+		MOV DX, ent
+		INT 21H
+
+		JMP pushloop
       endprogr: 
 		MOV AH, 9
+		MOV DX, ent
+		INT 21H
+
 		MOV DX, koniec
 		INT 21H
 
@@ -144,12 +173,14 @@ org 100h
 
 wrong    db  "Podales niepoprawny argument.$"
 hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
-getnumb  db  "Podaj liczbe: $"
+getnumb  db  "Podaj liczbe:$"
 ent    	 db  10,13,36 
 stopinfo db  "Wcisnij ENTER, aby zakonczyc wpisywanie liczby.$"
 askuser	 db  "Czy chcesz powt¢rzyc wpisywanie liczby? t - tak, n - nie.$"
-num1     db  0,36    ;W tej zmiennej przechowujemy pierwsza wprowadzona liczbe
-num2     db  0,36    ;W tej zmiennej przechowujemy druga wprowadzona liczbe
-count    db  0,36    ;Przechowywac bedzie ilosc cyfr na stosie
-numbers	 db  2,36    ;Ilosc liczb do dzialan arytmetycznych
+num1     db  0    ;W tej zmiennej przechowujemy pierwsza wprowadzona liczbe
+num2     db  0    ;W tej zmiennej przechowujemy druga wprowadzona liczbe
+count    db  0    
+numbers	 db  0    
 koniec   db  "Koniec.$"
+temp     db  0    ;Zmienna przechowujaca aktualna liczbe pobrana od uzytkownika
+nextnum  db  "Podaj drug¥ liczb©:$"
