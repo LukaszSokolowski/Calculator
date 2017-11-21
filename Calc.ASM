@@ -93,6 +93,8 @@ org 100h
 		;XOR CX, CX
 
 		MOV AX, [temp]	;Przenies do AX wartosc zmiennej
+		MOV BX, [temp1]
+		ADD AX, BX
 		MOV CX, 0	;Wyzeruj CX
 		MOV BX, 10	;Przenies dzielnik do BX
 	
@@ -101,29 +103,22 @@ org 100h
 		DIV BX
 		PUSH DX
 		INC CX
-		CMP AX, 0  ;odwroc ten stos poprzez dzielenie przez 10^(n-1) gdzie n to ilosc liczb 
+		CMP AX, 0 
 		JA pushwyni
 
 		MOV AH, 2
 	echow:
 		pop DX
-		add DX, 48
+		XOR DH, DH
+		ADD DX, 48
 		int 21h
-	        loop echow	
+	loop echow	
 
 			
       endprogr: 		
 		MOV AH, 9
 		MOV DX, ent
 		INT 21H
-
-		;MOV AH, 2
-		;MOV DX, [temp]
-		
-		;INT 21H
-
-	;	MOV DX, ent
-	;	INT 21H 
 
 		MOV DX, koniec
 		INT 21H
@@ -193,7 +188,7 @@ ent      db  10,13,36
 num1     db  0
 num2     db  0
 count    db  0
-temp     db  0
+temp     dw  0
 numbers  db  0
 wynik    db  0
-temp1    db  45
+temp1    dw  45
