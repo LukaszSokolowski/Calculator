@@ -72,16 +72,16 @@ org 100h
 		POP BX		;Zdejmij wartosc z BX (pojedyncza cyfra z wejscia)
 		MOV CH, CL
 	_mul:
-		CMP CH, 1
-		JE  dalej
-		MOV AX, 10
-		MUL BX
-		xor dx,dx
-		MOV BX, AX	
-		DEC CH
-		JMP _mul
+		CMP CH, 1	;Mnozymy (n-1) razy gdzie n to ilosc liczb na stosie 
+		JE  dalej	;Jesli spelniony warunek przejdz do dodania wyniku
+		MOV AX, 10	;Przenies do AX wartosc 10
+		MUL BX		;Pomnoz BX razy wartosc AX i wynik do AX
+		xor dx,dx	;Zerowanie rejestru DX
+		MOV BX, AX	;Przenies do BX aktualny wynik mnozenia liczby
+		DEC CH		;Zmniejsz licznik mnozen o 1
+		JMP _mul	;Przejdz do kolejnego kroku mnozenia
 	dalej:
-		ADD [temp] , BX
+		ADD [temp] , BX ;Dodaj do zmiennej aktualna wartosc liczby
 		MOV [count], CL  ;3 2 1 przeno˜ do count aktualn¥ ilosc liczb na stosie
 		DEC CL		;osiaga wartosc 0 dla 1 na stosie Zmniejsz wartosc licznika stosu o 1
 
@@ -92,17 +92,17 @@ org 100h
 		;XOR BX, BX
 		;XOR CX, CX
 
-		MOV AX, [temp]
-		MOV CX, 0
-		MOV BX, 10
+		MOV AX, [temp]	;Przenies do AX wartosc zmiennej
+		MOV CX, 0	;Wyzeruj CX
+		MOV BX, 10	;Przenies dzielnik do BX
 	
        pushwyni:
-			XOR DX, DX
-			DIV BX
-			PUSH DX
-			INC CX
-			CMP AX, 0  ;odwroc ten stos poprzez dzielenie przez 10^(n-1) gdzie n to ilosc liczb 
-			JA pushwyni
+		XOR DX, DX
+		DIV BX
+		PUSH DX
+		INC CX
+		CMP AX, 0  ;odwroc ten stos poprzez dzielenie przez 10^(n-1) gdzie n to ilosc liczb 
+		JA pushwyni
 
 		MOV AH, 2
 	echow:
