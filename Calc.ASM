@@ -68,7 +68,7 @@ org 100h
       				;*z kolejno wprowadzonych cyfr
       poploop:
 		CMP CL,0	;Porownaj czy stos czysty
-		JE  operat	;Jesli tak to koniec programu
+		JE  choose	;Jesli tak to koniec programu
 		POP BX		;Zdejmij wartosc z BX (pojedyncza cyfra z wejscia)
 		MOV CH, CL
 	_mul:
@@ -87,41 +87,107 @@ org 100h
 
 		JMP poploop	;Przejdz do poczatku etykiety
 		
-	operat:  
-		;XOR AX, AX
-		;XOR BX, BX
-		;XOR CX, CX
+	choose:
+		XOR CX, CX        ;Wyczysc rejestr CX
+		MOV AL, [numbers] ;Przenies do AL ilosc liczb do pobrania
+		CMP AL, 2	  ;Jesli rowne 2 to przejdz do pierwszej
+		JE  first	  ;Przejdz do etykiety first
+		MOV AX, [temp]	  ;Przenies do AX wartosc zliczby wprowadzonej przez uzytkownika
+		MOV [num2], AX	  ;Przenies do zmiennej [num2] wartosc rejestru AX
+		JMP operat	  ;Przejdz do etykiety wyboru operacji
+	first:
+		MOV AX, [temp]	  ;Przenies do AX wartosc zmiennej temp czyli liczby uzytkownika
+		MOV [num1], AX	  ;Przenies do zmiennej num1
+		XOR AX, AX	  ;Wyczysc rejestr
+		MOV [temp], AX    ;Wyczysc zmienna tymczasowa
+		MOV AL, [numbers] ;Przenies do AL informacje o ilosci liczb do pobrania
+		DEC AL		  ;Zmniejsz o 1 liczbe zmiennych
+		MOV [numbers], AL ;Przenies z rejestru AL zmniejszona liczbe do zmiennej numbers
+		JMP input         ;Przejdz do wprowadzania kolejnej liczby
 
-		MOV AX, [temp]	;Przenies do AX wartosc zmiennej
-		MOV BX, [temp1]
+	operat:  
+		MOV AH, 9	  ;Funkcja wywolujaca lancuch z DX
+		MOV DX, oper	  ;Przenies do DX zapytanie o rodzaj operacji
+		INT 21H		  ;Przerwanie DOS
+		
+		MOV DX, ent	  ;Przenies do DX zmienna z symbolami (enter)
+		INT 21H		  ;Przerwanie DOS
+	  
+		MOV AH, 1	  ;Funkcja wczytaj znak
+		INT 21H		  ;Przerwanie DOS
+			
+		MOV AH, 9
+		MOV DX, ent
+		INT 21H
+		
+		CMP AL, 43        ;43 to znak dodawania
+		JE  xadd	  ;Przejdz do dodawania
+
+		CMP AL, 45	  ;45 to znak minusa
+		JE  xsub	  ;Przejdz do odejmowania
+
+		CMP AL, 42	  ;42 to znak mnozenia
+		JE  xmul	  ;Przejdz do mnozenia
+
+		CMP AL, 47	  ;47 to znak dzielenia
+		JE  xdiv	  ;Przejdz do dzielenia
+
+		JMP endprogr	  ;Jesli wprowadzony znak bledny przejdz do zakonczenia programu
+
+	xadd:
+		MOV AX, [num1]
+		MOV BX, [num2]	  ;DODAWANIE
 		ADD AX, BX
-		MOV CX, 0	;Wyzeruj CX
+		JMP cont
+	xsub:
+		MOV AX, [num1]
+		MOV BX, [num2]	  ;ODEJMOWANIE
+		SUB AX, BX
+		JMP cont
+	xmul:
+		MOV AX, [num1]
+		MOV BX, [num2]	  ;MNOZENIE
+		MUL BX
+		JMP cont
+
+	xdiv:
+		MOV AX, [num1]
+		MOV BX, [num2]    ;DZIELENIE
+		DIV BX
+		JMP cont
+	cont:
+		MOV CX, 0	;Przenies 0 do CX
 		MOV BX, 10	;Przenies dzielnik do BX
 	
        pushwyni:
-		XOR DX, DX
-		DIV BX
-		PUSH DX
-		INC CX
-		CMP AX, 0 
-		JA pushwyni
+		XOR DX, DX	;Wyzeruj DX
+		DIV BX		;Podziel AX przez BX
+		PUSH DX		;Wrzuc reszte
+		INC CX		;Zwieksz licznik
+		CMP AX, 0 	;Porownaj czy licznik rowny 0
+		JA pushwyni	;Jesli wiekszy dziel dalej
 
-		MOV AH, 2
+
+		MOV AH, 9	;Funkcja wypisz lancuch
+		MOV DX, result	;Informacja o wyniku
+		INT 21H
+
+		MOV AH, 2	;Wypisz znak
 	echow:
-		pop DX
-		XOR DH, DH
-		ADD DX, 48
-		int 21h
+		POP DX		;Zrzuc do DX
+		XOR DH, DH	;Zeruj gore rejestru DX czyli DH
+		ADD DX, 48	;Dodaj 48 tak aby wyswietlic cyfre
+		INT 21H		;Przerwanie DOS
 	loop echow	
 
 			
       endprogr: 		
-		MOV AH, 9
-		MOV DX, ent
-		INT 21H
+		MOV AH, 9	;Funkcja wypisz lancuch z DX
+		MOV DX, ent	;Enter
+		INT 21H		;Przerwanie DOS
 
-		MOV DX, koniec
-		INT 21H
+		MOV DX, dziekuje;Napis pozegnalny
+		INT 21H		;Przerwanie DOS
 
 		MOV AX, 4C00H   ;Zwracamy kontrole do DOS (stop program)
 		INT 21H		;Przerwanie DOS
@@ -181,14 +247,12 @@ hello    db  "Witaj! Ten program jest prostym kalkulatorem.$"
 getnumb  db  "Podaj liczbe:$"
 stopinfo db  "Wcisnij ENTER, aby zakonczyc wpisywanie liczby.$"
 askuser	 db  "Czy chcesz powt¢rzyc wpisywanie liczby? t - tak, n - nie.$"
-koniec   db  "Koniec.$"
-nextnum  db  "Podaj drug¥ liczb©:$"
+result   db  "Wynik to:  $"
 oper	 db  "Wybierz operacje na tych dwoch liczbach *,/,-,+ :$"
+dziekuje db  "Dziekuje bardzo.$"
 ent      db  10,13,36
-num1     db  0
-num2     db  0
+num1     dw  0
+num2     dw  0
 count    db  0
 temp     dw  0
-numbers  db  0
-wynik    db  0
-temp1    dw  45
+numbers  db  2
