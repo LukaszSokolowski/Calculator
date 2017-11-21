@@ -1,1 +1,1 @@
-e:\nc\nasm\nasm -o wynik.com -f bin 5x.asm
+e:\nc\nasm\nasm -o wynik.com -f bin Calc.asm
